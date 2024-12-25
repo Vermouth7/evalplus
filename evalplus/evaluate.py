@@ -4,12 +4,14 @@ import os
 import pickle
 import threading
 import time
+import warnings
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from warnings import warn
 
+warnings.filterwarnings("ignore", category=UserWarning)
 import numpy as np
 from evalplus.codegen import run_codegen
 from evalplus.config import *

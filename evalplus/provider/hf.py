@@ -68,10 +68,14 @@ class HuggingFaceDecoder(DecoderBase):
         
         with open(split_file, 'r', encoding='utf-8') as input_file:
             split_data=json.load(input_file)
+        
         if patch:
             for i in split_data:
-                if task_id==i['task_id']:
-                    prompt=i['new_prompt']
+                if str(get_number(task_id))==str(i['task_id']):
+                    if 'mbpp' in task_id.lower():
+                        prompt="{}\nPlease note that you may need to use the following two key messages during the generation process: 1.{}\n2.{}\n".format(prompt,i['instruction 1'],i['instruction 2'])
+                    else:
+                        prompt=i['new_prompt']
         prompt = (
             prompt
             if self.is_direct_completion()
@@ -79,6 +83,7 @@ class HuggingFaceDecoder(DecoderBase):
                 prompt, self.instruction_prefix, self.response_prefix, self.tokenizer
             )
         )
+        
         input_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(
             self.device
         )
@@ -95,7 +100,9 @@ class HuggingFaceDecoder(DecoderBase):
             vector=get_split_hs(self.model,self.tokenizer,get_number(task_id),split_file)[0]  ## only for one batch
             self.model.reset()
             self.model.set_controller(layer_ids=layers, activations=vector,normalize=nrmlize,operator=operator,coef=coef)
-            self.model.set_pos([input_tokens.shape[1]-1])
+            # self.model.set_pos([input_tokens.shape[1]-1])
+            self.model.set_pos([input_tokens.shape[1]-6])
+            
                             
         outputs = self.model.generate(
             input_ids=input_tokens,
@@ -109,7 +116,6 @@ class HuggingFaceDecoder(DecoderBase):
             use_cache=False,
             output_hidden_states=True,
             discriminator=discriminator,
-            patch=patch,
             **kwargs,
         )
 
